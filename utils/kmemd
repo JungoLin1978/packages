@@ -1,0 +1,56 @@
+include $(TOPDIR)/rules.mk
+
+PKG_NAME:=kmemd
+PKG_VERSION:=1.0.0
+PKG_RELEASE:=1
+
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
+PKG_SOURCE_URL:=https://github.com/wkz/kmemd/archive/refs/tags/
+PKG_SOURCE_URL_FILE:=$(PKG_VERSION).tar.gz
+PKG_HASH:=fefa3c8f0d54a8c4de2d04e292aa46e30f8df4d9f9b226ffc8eea9d01ed01bf8
+
+PKG_MAINTAINER:=Jungo Lin <jungolin.tw@gmail.com>
+PKG_LICENSE:=GPL-2.0-only
+PKG_LICENSE_FILES:=COPYING
+
+include $(INCLUDE_DIR)/package.mk
+
+define Package/kmemd
+  SECTION:=utils
+  CATEGORY:=Utilities
+  TITLE:=kmemd - kernel memory daemon
+  URL:=https://github.com/wkz/kmemd
+  DEPENDS:=+libbpf
+endef
+
+define Package/kmemd/description
+  kmemd is a kernel memory daemon.
+  Explore a live Linux kernel's memory using GDB
+endef
+
+define Build/Prepare
+	$(call Build/Prepare/Default)
+	(cd $(PKG_BUILD_DIR); ./autogen.sh)
+endef
+
+define Build/Configure
+	(cd $(PKG_BUILD_DIR); \
+		./configure \
+		--target=$(GNU_TARGET_NAME) \
+		--host=$(GNU_TARGET_NAME) \
+		--build=$(GNU_HOST_NAME) \
+		--prefix=/usr \
+		--with-sysroot=$(STAGING_DIR_ROOT) \
+	)
+endef
+
+define Build/Install
+	$(MAKE) -C $(PKG_BUILD_DIR) DESTDIR=$(PKG_INSTALL_DIR) install
+endef
+
+define Package/kmemd/install
+	$(INSTALL_DIR) $(1)/usr/sbin
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/kmemd $(1)/usr/sbin/
+endef
+
+$(eval $(call BuildPackage,kmemd))
